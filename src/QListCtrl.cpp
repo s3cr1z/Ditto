@@ -26,6 +26,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define ROW_BOTTOM_BORDER		4
 #define ROW_LEFT_BORDER			3
+#define ROW_VERTICAL_PADDING	14
 #define COLOR_SHADOW			RGB(245, 245, 245)
 #define DUMMY_COL_WIDTH			2
 
@@ -45,6 +46,7 @@ static CMutex g_colorNameMapMutex;
 
 static void FillRoundedListRect(CDC* pDC, const CRect& rect, int radius, COLORREF color)
 {
+	radius = min(radius, min(rect.Width(), rect.Height()) / 2);
 	Gdiplus::Graphics graphics(pDC->GetSafeHdc());
 	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
@@ -437,7 +439,7 @@ void CQListCtrl::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 	GetTextMetrics(hDC, &tm);
 	if (m_windowDpi != NULL)
 	{
-		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(14);
+		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(ROW_VERTICAL_PADDING);
 		m_rowHeight = lpMeasureItemStruct->itemHeight;
 	}
 	SelectObject(hDC, hFontOld);

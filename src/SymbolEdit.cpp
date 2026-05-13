@@ -17,6 +17,7 @@
 
 static void FillRoundedSearchRect(CDC* pDC, const CRect& rect, int radius, COLORREF color)
 {
+	radius = min(radius, min(rect.Width(), rect.Height()) / 2);
 	Gdiplus::Graphics graphics(pDC->GetSafeHdc());
 	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
