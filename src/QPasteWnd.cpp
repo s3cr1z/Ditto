@@ -668,6 +668,11 @@ void CQPasteWnd::OnSize(UINT nType, int cx, int cy)
 	MoveControls();
 }
 
+int CQPasteWnd::CommandRailHeight()
+{
+	return m_DittoWindow.m_dpi.Scale(41);
+}
+
 void CQPasteWnd::MoveControls()
 {
 	CRect crRect;
@@ -676,7 +681,7 @@ void CQPasteWnd::MoveControls()
 	int cy = crRect.Height();
 	int outerPadding = m_DittoWindow.m_dpi.Scale(8);
 	int innerPadding = m_DittoWindow.m_dpi.Scale(6);
-	int commandRailHeight = m_DittoWindow.m_dpi.Scale(41);
+	int commandRailHeight = CommandRailHeight();
 	int topOfListBox = outerPadding;
 
 	if (theApp.m_GroupID > 0 && m_bShowStarredClips == false)
@@ -738,7 +743,11 @@ void CQPasteWnd::MoveControls()
 		m_modernScrollBarHorz.ShowWindow(SW_HIDE);
 
 		auto border = m_DittoWindow.m_dpi.Scale(10);
-		m_noSearchResultsStatic.MoveWindow(outerPadding + border, topOfListBox + border, cx - ((outerPadding + border) * 2), cy - listBoxBottomOffset - topOfListBox + 1 - border);
+		m_noSearchResultsStatic.MoveWindow(
+			outerPadding + border,
+			topOfListBox + border,
+			max(0, cx - ((outerPadding + border) * 2)),
+			max(0, cy - listBoxBottomOffset - topOfListBox - innerPadding - (border * 2)));
 	}
 	else
 	{
@@ -6718,7 +6727,7 @@ BOOL CQPasteWnd::OnEraseBkgnd(CDC* pDC)
 	GetClientRect(&rect);
 	pDC->FillSolidRect(rect, CGetSetOptions::m_Theme.MainWindowBG());
 
-	CRect commandRail(rect.left, rect.bottom - m_DittoWindow.m_dpi.Scale(41), rect.right, rect.bottom);
+	CRect commandRail(rect.left, rect.bottom - CommandRailHeight(), rect.right, rect.bottom);
 	pDC->FillSolidRect(commandRail, CGetSetOptions::m_Theme.MainWindowElevatedBG());
 
 	CRect divider(commandRail.left, commandRail.top, commandRail.right, commandRail.top + 1);
@@ -8118,6 +8127,10 @@ void CQPasteWnd::RefreshThemeColors()
 	m_stGroup.SetTextColor(CGetSetOptions::m_Theme.GroupTreeText());
 	m_noSearchResultsStatic.SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
 	m_noSearchResultsStatic.SetTextColor(CGetSetOptions::m_Theme.ListBoxEvenRowsText());
+	if (::IsWindow(m_GroupTree.GetSafeHwnd()) && m_GroupTree.IsWindowVisible())
+	{
+		m_GroupTree.RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	}
 	m_lstHeader.RefreshVisibleRows();
 	
 	// Force repaint of the entire window including non-client area

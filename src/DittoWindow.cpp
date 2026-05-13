@@ -876,9 +876,10 @@ void CDittoWindow::MinMaxWindow(CWnd *pWnd, long lOption)
 
 void CDittoWindow::OnDpiChanged(CWnd *pParent, int dpi)
 {
+	int captionSize = max(1, m_dpi.UnScale(m_captionBorderWidth));
 	m_dpi.Update(dpi);
 
-	m_captionBorderWidth = m_dpi.Scale(32);
+	m_captionBorderWidth = m_dpi.Scale(captionSize);
 	m_borderSize = m_dpi.Scale(1);
 
 	m_VertFont.DeleteObject();
