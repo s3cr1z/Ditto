@@ -6,9 +6,9 @@
 
 CDittoWindow::CDittoWindow(void)
 {
-	m_captionBorderWidth = m_dpi.Scale(25);
+	m_captionBorderWidth = m_dpi.Scale(32);
 
-	m_borderSize = 2;
+	m_borderSize = 1;
 	m_bMouseOverChevron = false;
 	m_bMouseDownOnChevron = false;
 	m_bMouseDownOnClose = false;
@@ -26,10 +26,10 @@ CDittoWindow::CDittoWindow(void)
 	m_crChevronBT.SetRectEmpty();
 	m_crMaximizeBT.SetRectEmpty();
 	m_crMinimizeBT.SetRectEmpty();
-	m_CaptionColorLeft = RGB(255, 255, 255);
-	m_CaptionColorRight = RGB(204, 204, 204);
-	m_CaptionTextColor = RGB(191, 191, 191);
-	m_border = RGB(204, 204, 204);
+	m_CaptionColorLeft = RGB(249, 250, 251);
+	m_CaptionColorRight = RGB(243, 246, 249);
+	m_CaptionTextColor = RGB(32, 31, 30);
+	m_border = RGB(210, 218, 226);
 	m_sendWMClose = true;
 	m_customWindowTitle = _T("");
 	m_useCustomWindowTitle = false;
@@ -48,11 +48,11 @@ void CDittoWindow::DoCreate(CWnd *pWnd)
 	m_dpi.SetHwnd(pWnd->m_hWnd);
 	
 
-	m_VertFont.CreateFont(-m_dpi.Scale(19), 0, -900, 0, 400, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_VertFont.CreateFont(-m_dpi.Scale(14), 0, -900, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,	CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
 							DEFAULT_PITCH|FF_SWISS, _T("Segoe UI"));
 
-	m_HorFont.CreateFont(-m_dpi.Scale(19), 0, 0, 0, 500, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_HorFont.CreateFont(-m_dpi.Scale(14), 0, 0, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 						OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
 						DEFAULT_PITCH|FF_SWISS, _T("Segoe UI"));
 
@@ -250,7 +250,7 @@ void CDittoWindow::DoNcPaint(CWnd *pWnd)
 	// Draw the window border
 	CRect rcBorder(0, 0, lWidth, rcFrame.Height());
 
-	int border = m_dpi.Scale(2);
+	int border = m_dpi.Scale(1);
 	int widthHeight = m_dpi.Scale(16);
 
 	for (int x = 0; x < border; x++)
@@ -268,22 +268,22 @@ void CDittoWindow::DoNcPaint(CWnd *pWnd)
 
 	if (m_bDrawClose)
 	{
-		iconArea += m_dpi.Scale(32);
+		iconArea += m_dpi.Scale(34);
 		closeIndex = index++;
 	}
 	if (m_bDrawChevron)
 	{
-		iconArea += m_dpi.Scale(32);
+		iconArea += m_dpi.Scale(34);
 		chevronIndex = index++;
 	}
 	if (m_bDrawMaximize)
 	{
-		iconArea += m_dpi.Scale(32);
+		iconArea += m_dpi.Scale(34);
 		maxIndex = index++;
 	}
 	if (m_bDrawMinimize)
 	{
-		iconArea += m_dpi.Scale(32);
+		iconArea += m_dpi.Scale(34);
 		minIndex = index++;
 	}
 	
@@ -400,14 +400,8 @@ void CDittoWindow::DoNcPaint(CWnd *pWnd)
 	}
 
 
-	HBRUSH leftColor = CreateSolidBrush(m_CaptionColorLeft);
-	HBRUSH rightColor = CreateSolidBrush(m_CaptionColorRight);	
-
-	::FillRect(dc, &leftRect, leftColor);
-	::FillRect(dc, &rightRect, rightColor);
-
-	DeleteObject(leftColor);
-	DeleteObject(rightColor);
+	dc.FillSolidRect(leftRect, m_CaptionColorLeft);
+	dc.FillSolidRect(rightRect, m_CaptionColorRight);
 
 
 	int nOldBKMode = dc.SetBkMode(TRANSPARENT);
@@ -717,12 +711,12 @@ void CDittoWindow::SetCaptionOn(CWnd *pWnd, int nPos, bool bOnstartup, int capti
 	m_captionFontSize = captionFontSize;
 
 	m_VertFont.DeleteObject();
-	m_VertFont.CreateFont(-m_dpi.Scale(captionFontSize), 0, -900, 0, 400, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_VertFont.CreateFont(-m_dpi.Scale(captionFontSize), 0, -900, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_SWISS, _T("Segoe UI"));
 
 	m_HorFont.DeleteObject();
-	m_HorFont.CreateFont(-m_dpi.Scale(captionFontSize), 0, 0, 0, 500, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_HorFont.CreateFont(-m_dpi.Scale(captionFontSize), 0, 0, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_SWISS, _T("Segoe UI"));
 
@@ -884,17 +878,17 @@ void CDittoWindow::OnDpiChanged(CWnd *pParent, int dpi)
 {
 	m_dpi.Update(dpi);
 
-	m_captionBorderWidth = m_dpi.Scale(25);
-	m_borderSize = m_dpi.Scale(2);
+	m_captionBorderWidth = m_dpi.Scale(32);
+	m_borderSize = m_dpi.Scale(1);
 
 	m_VertFont.DeleteObject();
 	m_HorFont.DeleteObject();
 
-	m_VertFont.CreateFont(-m_dpi.Scale(m_captionFontSize), 0, -900, 0, 400, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_VertFont.CreateFont(-m_dpi.Scale(m_captionFontSize), 0, -900, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_SWISS, _T("Segoe UI"));
 
-	m_HorFont.CreateFont(-m_dpi.Scale(m_captionFontSize), 0, 0, 0, 500, FALSE, FALSE, 0, DEFAULT_CHARSET,
+	m_HorFont.CreateFont(-m_dpi.Scale(m_captionFontSize), 0, 0, 0, 600, FALSE, FALSE, 0, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_SWISS, _T("Segoe UI"));
 
