@@ -185,6 +185,7 @@ public:
     BOOL HideQPasteWindow(bool releaseFocus, BOOL clearSearchData = -1);
     BOOL ShowQPasteWindow(BOOL bFillList = TRUE);
     void MoveControls();
+	int CommandRailHeight();
 
     void DeleteSelectedRows();
 

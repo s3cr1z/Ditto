@@ -64,6 +64,10 @@ int CGroupTree::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CTreeCtrl::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
+	SetBkColor(CGetSetOptions::m_Theme.GroupTreeBG());
+	SetTextColor(CGetSetOptions::m_Theme.GroupTreeText());
+	ModifyStyle(WS_BORDER | TVS_HASLINES | TVS_LINESATROOT, TVS_FULLROWSELECT | TVS_SHOWSELALWAYS);
+
 	CImageList iml;
 	iml.Create(18, 16, ILC_COLOR | ILC_MASK, 0, 1);
 

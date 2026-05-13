@@ -1,4 +1,4 @@
-// AeroEdit.cpp : implementation file
+﻿// AeroEdit.cpp : implementation file
 //
 
 #include "stdafx.h"
@@ -6,6 +6,7 @@
 #include "cp_main.h"
 #include "QListCtrl.h"
 #include "..\Shared\TextConvert.h"
+#include <gdiplus.h>
 
 // CSymbolEdit
 
@@ -13,6 +14,24 @@
 #define CLEAR_LIST 3010
 #define LIST_MAX_COUNT 10
 #define MAX_SAVED_SEARCH_LENGTH 50
+
+static void FillRoundedSearchRect(CDC* pDC, const CRect& rect, int radius, COLORREF color)
+{
+	radius = min(radius, min(rect.Width(), rect.Height()) / 2);
+	Gdiplus::Graphics graphics(pDC->GetSafeHdc());
+	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
+	Gdiplus::GraphicsPath path;
+	int diameter = radius * 2;
+	path.AddArc(rect.left, rect.top, diameter, diameter, 180, 90);
+	path.AddArc(rect.right - diameter, rect.top, diameter, diameter, 270, 90);
+	path.AddArc(rect.right - diameter, rect.bottom - diameter, diameter, diameter, 0, 90);
+	path.AddArc(rect.left, rect.bottom - diameter, diameter, diameter, 90, 90);
+	path.CloseFigure();
+
+	Gdiplus::SolidBrush brush(Gdiplus::Color(255, GetRValue(color), GetGValue(color), GetBValue(color)));
+	graphics.FillPath(&brush, &path);
+}
 
 IMPLEMENT_DYNAMIC(CSymbolEdit, CEdit)
 
@@ -36,7 +55,7 @@ CSymbolEdit::CSymbolEdit() :
 		CLIP_DEFAULT_PRECIS,       // nClipPrecision
 		DEFAULT_QUALITY,           // nQuality
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-		_T("Calibri"));
+		_T("Segoe UI"));
 
 	m_mouseDownOnSearches = false;
 	m_mouseHoveringOverSearches = false;
@@ -469,8 +488,7 @@ void CSymbolEdit::OnPaint()
 	textRect.left += LOWORD(margins);
 	textRect.right -= HIWORD(margins);
 
-	// Clearing the background
-	dc.FillSolidRect(rect, GetSysColor(COLOR_WINDOW));	
+	dc.FillSolidRect(rect, CGetSetOptions::m_Theme.MainWindowElevatedBG());
 
 	if (m_hSymbolIcon)
 	{
@@ -507,7 +525,13 @@ void CSymbolEdit::OnPaint()
 
 	if(this == GetFocus() || text.GetLength() > 0)
 	{
-		dc.FillSolidRect(rect, CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		FillRoundedSearchRect(&dc, rect, m_windowDpi->Scale(8), CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		CPen borderPen(PS_SOLID, 1, CGetSetOptions::m_Theme.SearchTextBoxFocusBorder());
+		CPen* oldPen = dc.SelectObject(&borderPen);
+		CBrush* oldBrush = (CBrush*)dc.SelectStockObject(NULL_BRUSH);
+		dc.RoundRect(rect, CPoint(m_windowDpi->Scale(8), m_windowDpi->Scale(8)));
+		dc.SelectObject(oldBrush);
+		dc.SelectObject(oldPen);
 
 		//CBrush borderBrush(CGetSetOptions::m_Theme.SearchTextBoxFocusBorder());
 		//dc.FrameRect(rect, &borderBrush);
@@ -527,7 +551,13 @@ void CSymbolEdit::OnPaint()
 	}
 	else
 	{
-		dc.FillSolidRect(rect, CGetSetOptions::m_Theme.MainWindowBG());
+		FillRoundedSearchRect(&dc, rect, m_windowDpi->Scale(8), CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		CPen borderPen(PS_SOLID, 1, CGetSetOptions::m_Theme.MainWindowBorder());
+		CPen* oldPen = dc.SelectObject(&borderPen);
+		CBrush* oldBrush = (CBrush*)dc.SelectStockObject(NULL_BRUSH);
+		dc.RoundRect(rect, CPoint(m_windowDpi->Scale(8), m_windowDpi->Scale(8)));
+		dc.SelectObject(oldBrush);
+		dc.SelectObject(oldPen);
 	}
 
 
@@ -615,8 +645,8 @@ HBRUSH CSymbolEdit::CtlColor(CDC* pDC, UINT n)
 	}
 	else
 	{
-		pDC->SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
-		color = CGetSetOptions::m_Theme.MainWindowBG();
+		pDC->SetBkColor(CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		color = CGetSetOptions::m_Theme.SearchTextBoxFocusBG();
 	}
 
 	if (color != m_lastBrushColor)

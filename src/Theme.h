@@ -34,6 +34,8 @@ public:
 
 	COLORREF ListSmallQuickPasteIndexColor() const { return m_listSmallQuickPasteIndexColor;  }
 	COLORREF MainWindowBG() const { return m_mainWindowBG; }
+	COLORREF MainWindowBorder() const { return m_mainWindowBorder; }
+	COLORREF MainWindowElevatedBG() const { return m_mainWindowElevatedBG; }
 	COLORREF SearchTextBoxFocusBG() const { return m_searchTextBoxFocusBG; }
 	COLORREF SearchTextBoxFocusText() const { return m_searchTextBoxFocusText; }
 	COLORREF SearchTextBoxFocusBorder() const { return m_searchTextBoxFocusBorder; }
@@ -86,6 +88,8 @@ protected:
 	COLORREF m_clipPastedColor;
 	COLORREF m_listSmallQuickPasteIndexColor;
 	COLORREF m_mainWindowBG;
+	COLORREF m_mainWindowBorder;
+	COLORREF m_mainWindowElevatedBG;
 	COLORREF m_Border;
 	COLORREF m_BorderTopMost;
 	COLORREF m_BorderNotConnected;

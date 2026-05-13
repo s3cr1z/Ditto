@@ -26,6 +26,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define ROW_BOTTOM_BORDER		4
 #define ROW_LEFT_BORDER			3
+#define ROW_VERTICAL_PADDING	14
 #define COLOR_SHADOW			RGB(245, 245, 245)
 #define DUMMY_COL_WIDTH			2
 
@@ -42,6 +43,24 @@ static char THIS_FILE[] = __FILE__;
 // Static map to hold W3C color names and their RGB values
 static std::map<CString, COLORREF> g_colorNameMap;
 static CMutex g_colorNameMapMutex;
+
+static void FillRoundedListRect(CDC* pDC, const CRect& rect, int radius, COLORREF color)
+{
+	radius = min(radius, min(rect.Width(), rect.Height()) / 2);
+	Gdiplus::Graphics graphics(pDC->GetSafeHdc());
+	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
+	Gdiplus::GraphicsPath path;
+	int diameter = radius * 2;
+	path.AddArc(rect.left, rect.top, diameter, diameter, 180, 90);
+	path.AddArc(rect.right - diameter, rect.top, diameter, diameter, 270, 90);
+	path.AddArc(rect.right - diameter, rect.bottom - diameter, diameter, diameter, 0, 90);
+	path.AddArc(rect.left, rect.bottom - diameter, diameter, diameter, 90, 90);
+	path.CloseFigure();
+
+	Gdiplus::SolidBrush brush(Gdiplus::Color(255, GetRValue(color), GetGValue(color), GetBValue(color)));
+	graphics.FillPath(&brush, &path);
+}
 
 // Initializes the color map on first use
 void InitializeColorNameMap()
@@ -420,7 +439,7 @@ void CQListCtrl::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 	GetTextMetrics(hDC, &tm);
 	if (m_windowDpi != NULL)
 	{
-		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(ROW_BOTTOM_BORDER);
+		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(ROW_VERTICAL_PADDING);
 		m_rowHeight = lpMeasureItemStruct->itemHeight;
 	}
 	SelectObject(hDC, hFontOld);
@@ -478,8 +497,7 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			csText = csText.Mid(nSymEnd + 1);
 		}
 
-		// Draw the background of the list item.  Colors are selected
-		// according to the item's state.
+		COLORREF cardBorder = CGetSetOptions::m_Theme.MainWindowBorder();
 		if (rItem.state & LVIS_SELECTED)
 		{
 			if (bListHasFocus)
@@ -508,21 +526,30 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			}
 		}
 
-		pDC->FillSolidRect(rcItem, crBkgnd);
+		pDC->FillSolidRect(rcItem, CGetSetOptions::m_Theme.MainWindowBG());
+		CRect rcCard = rcItem;
+		rcCard.DeflateRect(m_windowDpi->Scale(4), m_windowDpi->Scale(3), m_windowDpi->Scale(4), m_windowDpi->Scale(3));
+		FillRoundedListRect(pDC, rcCard, m_windowDpi->Scale(6), crBkgnd);
+		CPen cardPen(PS_SOLID, 1, cardBorder);
+		CPen* pOldCardPen = pDC->SelectObject(&cardPen);
+		CBrush* pOldCardBrush = (CBrush*)pDC->SelectStockObject(NULL_BRUSH);
+		pDC->RoundRect(rcCard, CPoint(m_windowDpi->Scale(6), m_windowDpi->Scale(6)));
+		pDC->SelectObject(pOldCardBrush);
+		pDC->SelectObject(pOldCardPen);
 		nOldBKMode = pDC->SetBkMode(TRANSPARENT);
 
-		CRect rcText = rcItem;
-		rcText.left += m_windowDpi->Scale(ROW_LEFT_BORDER);
-		rcText.top += m_windowDpi->Scale(1);
-		rcText.bottom -= m_windowDpi->Scale(1);
+		CRect rcText = rcCard;
+		rcText.left += m_windowDpi->Scale(9);
+		rcText.right -= m_windowDpi->Scale(9);
+		rcText.top += m_windowDpi->Scale(3);
+		rcText.bottom -= m_windowDpi->Scale(3);
 
 		if (m_showIfClipWasPasted &&
 			strSymbols.GetLength() > 0 &&
 			strSymbols.Find(_T("<pasted>")) >= 0) //clip was pasted from ditto
 		{
-			CRect pastedRect(rcItem);
-			pastedRect.left++;
-			pastedRect.right = pastedRect.left + m_windowDpi->Scale(2);
+			CRect pastedRect(rcCard);
+			pastedRect.right = pastedRect.left + m_windowDpi->Scale(3);
 
 			pDC->FillSolidRect(pastedRect, CGetSetOptions::m_Theme.ClipPastedColor());
 		}
@@ -534,11 +561,11 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 
 		if (m_bShowTextForFirstTenHotKeys && firstTenNum >= 0)
 		{
-			rcText.left += m_windowDpi->Scale(12);
+			rcText.left += m_windowDpi->Scale(16);
 		}
 		else
 		{
-			rcText.left += m_windowDpi->Scale(3);
+			rcText.left += m_windowDpi->Scale(2);
 		}
 
 		bool drawInGroupIcon = true;
@@ -620,15 +647,15 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			GetWindowRect(crClient);
 			ScreenToClient(crClient);
 
-			CRect crHotKey = rcItem;
+			CRect crHotKey = rcCard;
 
 			int extraFromClipWasPaste = 0;
 			if (m_showIfClipWasPasted)
 				extraFromClipWasPaste = 3;
 
-			crHotKey.right = crHotKey.left + m_windowDpi->Scale(11);
-			crHotKey.left += m_windowDpi->Scale(1 + extraFromClipWasPaste);
-			crHotKey.top += m_windowDpi->Scale(1 + extraFromClipWasPaste);
+			crHotKey.right = crHotKey.left + m_windowDpi->Scale(15);
+			crHotKey.left += m_windowDpi->Scale(4 + extraFromClipWasPaste);
+			crHotKey.top += m_windowDpi->Scale(3 + extraFromClipWasPaste);
 
 			HFONT hOldFont = (HFONT)pDC->SelectObject(m_SmallFont);
 			COLORREF localOldTextColor = pDC->SetTextColor(CGetSetOptions::m_Theme.ListSmallQuickPasteIndexColor());
@@ -638,8 +665,8 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 
 			pDC->DrawText(cs, crHotKey, DT_BOTTOM);
 
-			pDC->MoveTo(CPoint(rcItem.left + m_windowDpi->Scale(8 + extraFromClipWasPaste), rcItem.top));
-			pDC->LineTo(CPoint(rcItem.left + m_windowDpi->Scale(8 + extraFromClipWasPaste), rcItem.bottom));
+			pDC->MoveTo(CPoint(rcCard.left + m_windowDpi->Scale(14 + extraFromClipWasPaste), rcCard.top + m_windowDpi->Scale(4)));
+			pDC->LineTo(CPoint(rcCard.left + m_windowDpi->Scale(14 + extraFromClipWasPaste), rcCard.bottom - m_windowDpi->Scale(4)));
 
 			pDC->SelectObject(hOldFont);
 			pDC->SetTextColor(localOldTextColor);

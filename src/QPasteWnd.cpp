@@ -443,6 +443,8 @@ int CQPasteWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		CGetSetOptions::m_Theme.ScrollBarThumb(),
 		CGetSetOptions::m_Theme.ScrollBarThumbHover()
 	);
+	m_modernScrollBar.SetWidth(6);
+	m_modernScrollBar.SetCornerRadius(4);
 
 	// Create modern scrollbar overlay (horizontal)
 	m_modernScrollBarHorz.Create(this, &m_lstHeader, ScrollBarOrientation::Horizontal);
@@ -452,8 +454,10 @@ int CQPasteWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		CGetSetOptions::m_Theme.ScrollBarThumb(),
 		CGetSetOptions::m_Theme.ScrollBarThumbHover()
 	);
+	m_modernScrollBarHorz.SetWidth(6);
+	m_modernScrollBarHorz.SetCornerRadius(4);
 
-	((CWnd*)&m_GroupTree)->CreateEx(NULL, _T("SysTreeView32"), NULL, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS, CRect(0, 0, 100, 100), this, 0);
+	((CWnd*)&m_GroupTree)->CreateEx(NULL, _T("SysTreeView32"), NULL, TVS_HASBUTTONS | TVS_SHOWSELALWAYS, CRect(0, 0, 100, 100), this, 0);
 	m_GroupTree.ModifyStyle(WS_CAPTION | WS_TABSTOP, 0);
 
 	m_GroupTree.SetNotificationWndEx(m_hWnd);
@@ -664,25 +668,31 @@ void CQPasteWnd::OnSize(UINT nType, int cx, int cy)
 	MoveControls();
 }
 
+int CQPasteWnd::CommandRailHeight()
+{
+	return m_DittoWindow.m_dpi.Scale(41);
+}
+
 void CQPasteWnd::MoveControls()
 {
 	CRect crRect;
 	GetClientRect(crRect);
 	int cx = crRect.Width();
 	int cy = crRect.Height();
-
-	//Hide the two pixels of space at the top, not sure where this is coming from
-	int topOfListBox = 0;
+	int outerPadding = m_DittoWindow.m_dpi.Scale(8);
+	int innerPadding = m_DittoWindow.m_dpi.Scale(6);
+	int commandRailHeight = CommandRailHeight();
+	int topOfListBox = outerPadding;
 
 	if (theApp.m_GroupID > 0 && m_bShowStarredClips == false)
 	{
 		m_stGroup.ShowWindow(SW_SHOW);
 		m_BackButton.ShowWindow(SW_SHOW);
 
-		m_BackButton.MoveWindow(m_DittoWindow.m_dpi.Scale(2), m_DittoWindow.m_dpi.Scale(2), m_DittoWindow.m_dpi.Scale(16), m_DittoWindow.m_dpi.Scale(16));
-		m_stGroup.MoveWindow(m_DittoWindow.m_dpi.Scale(24), m_DittoWindow.m_dpi.Scale(2), cx - m_DittoWindow.m_dpi.Scale(20), m_DittoWindow.m_dpi.Scale(16));
+		m_BackButton.MoveWindow(outerPadding, outerPadding, m_DittoWindow.m_dpi.Scale(20), m_DittoWindow.m_dpi.Scale(20));
+		m_stGroup.MoveWindow(outerPadding + m_DittoWindow.m_dpi.Scale(28), outerPadding + m_DittoWindow.m_dpi.Scale(2), cx - m_DittoWindow.m_dpi.Scale(44), m_DittoWindow.m_dpi.Scale(20));
 
-		topOfListBox = m_DittoWindow.m_dpi.Scale(20);
+		topOfListBox = m_DittoWindow.m_dpi.Scale(35);
 	}
 	else
 	{
@@ -690,7 +700,7 @@ void CQPasteWnd::MoveControls()
 		m_stGroup.ShowWindow(SW_HIDE);
 	}
 
-	int searchRowStart = 33;
+	int searchRowStart = 41;
 
 	/*if(CGetSetOptions::m_bShowPersistent)
 	{
@@ -698,7 +708,7 @@ void CQPasteWnd::MoveControls()
 	}*/
 
 	int nWidth = cx;
-	int listBoxBottomOffset = m_DittoWindow.m_dpi.Scale(searchRowStart);
+	int listBoxBottomOffset = commandRailHeight;
 
 	int extraSize = 0;
 
@@ -714,7 +724,7 @@ void CQPasteWnd::MoveControls()
 		CRect r;
 		m_lstHeader.GetWindowRect(&r);
 
-		rgnRect.CreateRectRgn(0, 0, cx, (cy - listBoxBottomOffset - topOfListBox) );
+		rgnRect.CreateRectRgn(0, 0, cx - (outerPadding * 2), (cy - listBoxBottomOffset - topOfListBox - innerPadding));
 
 		m_lstHeader.SetWindowRgn(rgnRect, TRUE);
 	}
@@ -733,14 +743,18 @@ void CQPasteWnd::MoveControls()
 		m_modernScrollBarHorz.ShowWindow(SW_HIDE);
 
 		auto border = m_DittoWindow.m_dpi.Scale(10);
-		m_noSearchResultsStatic.MoveWindow(border, topOfListBox + border, cx - border, cy - listBoxBottomOffset - topOfListBox + 1 - border);
+		m_noSearchResultsStatic.MoveWindow(
+			outerPadding + border,
+			topOfListBox + border,
+			max(0, cx - ((outerPadding + border) * 2)),
+			max(0, cy - listBoxBottomOffset - topOfListBox - innerPadding - (border * 2)));
 	}
 	else
 	{
 		m_lstHeader.ShowWindow(SW_SHOW);
 		m_noSearchResultsStatic.ShowWindow(SW_HIDE);
 
-		m_lstHeader.MoveWindow(0, topOfListBox, cx + extraSize, cy - listBoxBottomOffset - topOfListBox + extraSize + 1);
+		m_lstHeader.MoveWindow(outerPadding, topOfListBox, cx - (outerPadding * 2) + extraSize, cy - listBoxBottomOffset - topOfListBox + extraSize - innerPadding);
 		
 		// Update modern scrollbar position and visibility (only if enabled)
 		if (CGetSetOptions::m_useModernScrollBar)
@@ -766,11 +780,11 @@ void CQPasteWnd::MoveControls()
 			m_modernScrollBarHorz.Hide(false);
 		}
 	}
-	m_search.MoveWindow(m_DittoWindow.m_dpi.Scale(34), cy - m_DittoWindow.m_dpi.Scale(searchRowStart - 5), cx - m_DittoWindow.m_dpi.Scale(70), m_DittoWindow.m_dpi.Scale(25));
+	m_search.MoveWindow(m_DittoWindow.m_dpi.Scale(40), cy - m_DittoWindow.m_dpi.Scale(searchRowStart - 6), cx - m_DittoWindow.m_dpi.Scale(82), m_DittoWindow.m_dpi.Scale(28));
 
-	m_systemMenu.MoveWindow(cx - m_DittoWindow.m_dpi.Scale(30), cy - m_DittoWindow.m_dpi.Scale(28), m_DittoWindow.m_dpi.Scale(24), m_DittoWindow.m_dpi.Scale(24));
+	m_systemMenu.MoveWindow(cx - m_DittoWindow.m_dpi.Scale(34), cy - m_DittoWindow.m_dpi.Scale(34), m_DittoWindow.m_dpi.Scale(26), m_DittoWindow.m_dpi.Scale(26));
 
-	m_ShowGroupsFolderBottom.MoveWindow(m_DittoWindow.m_dpi.Scale(4), cy - m_DittoWindow.m_dpi.Scale(28), m_DittoWindow.m_dpi.Scale(24), m_DittoWindow.m_dpi.Scale(24));
+	m_ShowGroupsFolderBottom.MoveWindow(m_DittoWindow.m_dpi.Scale(8), cy - m_DittoWindow.m_dpi.Scale(34), m_DittoWindow.m_dpi.Scale(26), m_DittoWindow.m_dpi.Scale(26));
 
 	/*if (CGetSetOptions::m_bShowPersistent &&
 		CGetSetOptions::m_bShowAlwaysOnTopWarning)
@@ -2203,17 +2217,17 @@ void CQPasteWnd::UpdateFont()
 	m_lstHeader.SetLogFont(lf);
 
 	m_SearchFont.DeleteObject();
-	m_SearchFont.CreateFont(-m_DittoWindow.m_dpi.Scale(15), 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 3, 2, 1, 34, _T("Segoe UI"));
+	m_SearchFont.CreateFont(-m_DittoWindow.m_dpi.Scale(14), 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 3, 2, 1, 34, _T("Segoe UI"));
 	m_search.SetFont(&m_SearchFont);
 	m_search.SetPromptFont(m_SearchFont);
 
 	m_GroupTree.SetFont(&m_SearchFont);
 
 	m_groupFont.DeleteObject();
-	m_groupFont.CreateFont(-m_DittoWindow.m_dpi.Scale(12), 0, 0, 0, 400, 0, 1, 0, DEFAULT_CHARSET, 3, 2, 1, 34, _T("Segoe UI"));
+	m_groupFont.CreateFont(-m_DittoWindow.m_dpi.Scale(12), 0, 0, 0, 600, 0, 0, 0, DEFAULT_CHARSET, 3, 2, 1, 34, _T("Segoe UI"));
 	m_stGroup.SetFont(&m_groupFont);
 	m_stGroup.SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
-	m_stGroup.SetTextColor(CGetSetOptions::m_Theme.ListBoxEvenRowsText());
+	m_stGroup.SetTextColor(CGetSetOptions::m_Theme.GroupTreeText());
 
 	m_noSearchResultsStatic.SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
 	m_noSearchResultsStatic.SetTextColor(CGetSetOptions::m_Theme.ListBoxEvenRowsText());
@@ -6711,16 +6725,15 @@ BOOL CQPasteWnd::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rect;
 	GetClientRect(&rect);
-	CBrush myBrush(CGetSetOptions::m_Theme.MainWindowBG());    // dialog background color
-	CBrush* pOld = pDC->SelectObject(&myBrush);
-	BOOL bRes = pDC->PatBlt(0, 0, rect.Width(), rect.Height(), PATCOPY);
-	pDC->SelectObject(pOld);    // restore old brush
-	return bRes;                       // CDialog::OnEraseBkgnd(pDC);
+	pDC->FillSolidRect(rect, CGetSetOptions::m_Theme.MainWindowBG());
 
-	//return TRUE;
-	// TODO: Add your message handler code here and/or call default
+	CRect commandRail(rect.left, rect.bottom - CommandRailHeight(), rect.right, rect.bottom);
+	pDC->FillSolidRect(commandRail, CGetSetOptions::m_Theme.MainWindowElevatedBG());
 
-	//return CWndEx::OnEraseBkgnd(pDC);
+	CRect divider(commandRail.left, commandRail.top, commandRail.right, commandRail.top + 1);
+	pDC->FillSolidRect(divider, CGetSetOptions::m_Theme.MainWindowBorder());
+
+	return TRUE;
 }
 
 void CQPasteWnd::OnQuickoptionsShowintaskbar()
@@ -8108,6 +8121,17 @@ void CQPasteWnd::RefreshThemeColors()
 	
 	// Refresh scrollbar colors
 	RefreshScrollBarColors();
+	m_GroupTree.SetBkColor(CGetSetOptions::m_Theme.GroupTreeBG());
+	m_GroupTree.SetTextColor(CGetSetOptions::m_Theme.GroupTreeText());
+	m_stGroup.SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
+	m_stGroup.SetTextColor(CGetSetOptions::m_Theme.GroupTreeText());
+	m_noSearchResultsStatic.SetBkColor(CGetSetOptions::m_Theme.MainWindowBG());
+	m_noSearchResultsStatic.SetTextColor(CGetSetOptions::m_Theme.ListBoxEvenRowsText());
+	if (::IsWindow(m_GroupTree.GetSafeHwnd()) && m_GroupTree.IsWindowVisible())
+	{
+		m_GroupTree.RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	}
+	m_lstHeader.RefreshVisibleRows();
 	
 	// Force repaint of the entire window including non-client area
 	SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
